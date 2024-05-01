@@ -10,7 +10,7 @@ def manage_client_connection(client_socket, addr, clients):
 
         if username in [user[1] for user in clients]:
             print(f"Il nome utente '{username}' è già in uso.")
-            client_socket.send("NOME UTENTE GIÀ IN USO. CHIUSURA DELLA CONNESSIONE.".encode(ENCODING))
+            client_socket.send("ERRORE NOME UTENTE GIÀ IN USO.".encode(ENCODING))
             return
 
         clients.append((client_socket, username))
@@ -22,7 +22,9 @@ def manage_client_connection(client_socket, addr, clients):
                 break
             print(f"[{username}] {message}")
             send_broadcast_message(message, clients, username)
-    except Exception as e:
+    except ConnectionResetError:
+        print(f"Il client {addr} si è disconnesso in modo inatteso.")
+    except OSError as e:
         print(f"Errore durante la gestione della connessione con {addr}: {e}")
     finally:
         remove_client(client_socket, clients)
@@ -32,7 +34,7 @@ def send_broadcast_message(message, clients, sender_username):
         if username != sender_username:
             try:
                 client.send(f"{sender_username}: {message}".encode(ENCODING))
-            except Exception as e:
+            except OSError as e:
                 print(f"Si è verificato un errore durante l'invio del messaggio a {username}: {e}")
 
 def remove_client(client_socket, clients):
@@ -42,7 +44,7 @@ def remove_client(client_socket, clients):
                 client_socket.close()
                 print(f"Il client {username} si è disconnesso.")
                 clients.remove((client, username))
-            except Exception as e:
+            except OSError as e:
                 print(f"Si è verificato un errore durante la disconnessione del client {username}: {e}")
 
 def main():
@@ -51,7 +53,7 @@ def main():
     server.bind((SERVER_IP, PORT))
     server.listen()
 
-    print("Server in ascolto...")
+    print(f"Server in ascolto porta {PORT}...")
 
     clients = []
 
@@ -66,6 +68,8 @@ def main():
         for client_socket, _ in clients:
             client_socket.close()
         server.close()
+    except OSError as e:
+        print(f"Errore non gestito nel server: {e}")
 
 if __name__ == "__main__":
     main()

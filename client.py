@@ -10,10 +10,12 @@ def receive_messages(client_socket):
             if not message:
                 break
             print(f"{message}")
-            if message.strip().upper() == "NOME UTENTE GIÀ IN USO.":
+            if message.strip().upper() == "ERRORE NOME UTENTE GIÀ IN USO.":
                 print("\nLa connessione è stata chiusa, riavvia e tenta un nuovo nome utente...")
                 break
-    except Exception as e:
+    except ConnectionResetError:
+        print("\nIl server è andato offline")
+    except OSError as e:
         print(f"\nErrore durante la ricezione dei messaggi: {e}")
     finally:
         client_socket.close()
@@ -21,12 +23,16 @@ def receive_messages(client_socket):
 def send_message(client_socket):
     try:
         while True:
-            message = input("")
+            message = input()
             print(f"Messaggio inviato: {message}")
             client_socket.send(message.encode(ENCODING))
     except KeyboardInterrupt:
         print("\nChiusura del client...")
-    except Exception as e:
+        sys.exit(0)
+    except EOFError:
+        print("\nChiusura del client...")
+        sys.exit(0)
+    except OSError as e:
         print(f"\nErrore durante l'invio del messaggio: {e}")
     finally:
         client_socket.close()
