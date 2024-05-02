@@ -11,6 +11,7 @@ def manage_client_connection(client_socket, addr, clients):
         if username in [user[1] for user in clients]:
             print(f"Il nome utente '{username}' è già in uso.")
             client_socket.send("ERRORE NOME UTENTE GIÀ IN USO.".encode(ENCODING))
+            client_socket.close()
             return
 
         clients.append((client_socket, username))
